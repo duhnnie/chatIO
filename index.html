@@ -64,7 +64,7 @@
     </form>
     <script src="/socket.io/socket.io.js"></script>
     <script type="text/javascript">
-        var socket = io(),
+        var socket = io(undefined, {query: "nickname=123"}),
             input,
             list;
 
@@ -91,6 +91,11 @@
             item.className = 'notification';
             item.appendChild(document.createTextNode("user got disconnected."));
             list.appendChild(item);
+        });
+
+        socket.on('error', function (errorMsg) {
+            console.error(errorMsg);
+            alert(errorMsg);
         });
     </script>
 </body>

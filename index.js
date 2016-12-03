@@ -1,9 +1,30 @@
 var app = require('express')(),
     http = require('http').Server(app),
-    io = require('socket.io')(http);
+    io = require('socket.io')(http),
+    users = {};
 
 app.get('/', function (req, res) {
     res.sendFile(__dirname + '/index.html');
+});
+
+io.use(function (socket, next) {
+    var handshakeData = socket.request,
+        nickname = socket.handshake.query['nickname']; //handshakeData._query['nickname'];
+
+    if (!nickname || !nickname.trim()) {
+        return next(new Error("invalid nickname!"));
+    }
+    
+    console.log("Logging with nickname: " + nickname + '...');
+
+    if (!users[nickname]) {
+        users[nickname] = socket;        
+        next();    
+        console.log(nickname + ' logged.');
+    } else {
+        console.log("nickname \"" + nickname + "\" already taken.");
+        next(new Error("nickname \"" + nickname + "\" already taken."));
+    }
 });
 
 io.on('connection', function (socket) {
