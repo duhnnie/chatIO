@@ -49,6 +49,11 @@
         #messages li:nth-child(odd) {
             background: #eee;
         }
+
+        .notification {
+            color: #888888;
+            font-style: italic;
+        }
     </style>
 </head>
 <body>
@@ -76,6 +81,15 @@
             list = list || document.querySelector('#messages');
             item = document.createElement('li');
             item.appendChild(document.createTextNode(msg));
+            list.appendChild(item);
+        });
+
+        socket.on('user disconnect', function () {
+            var item;
+            list = list || document.querySelector('#messages');
+            item = document.createElement('li');
+            item.className = 'notification';
+            item.appendChild(document.createTextNode("user got disconnected."));
             list.appendChild(item);
         });
     </script>
