@@ -42,17 +42,32 @@
             padding: 0;
         }
 
-        #messages li {
-            padding: 5px 10px;
-        }
-
-        #messages li:nth-child(odd) {
-            background: #eee;
-        }
-
         .notification {
             color: #888888;
             font-style: italic;
+        }
+
+        .message {
+            background: #DFDFDF;
+            padding: .5em;
+            position: relative;
+        }
+
+        .message author {
+            font-weight: bold;
+            margin-bottom: .5em;
+        }
+
+        .message time {
+            font-size: 10px;
+            font-style: italic;
+            position: absolute;
+            bottom: 0.5em;
+            right: 0.5em;
+        }
+
+        .message p {
+            margin: 0;
         }
     </style>
 </head>
@@ -68,34 +83,106 @@
             input,
             list;
 
-        document.querySelector('form').addEventListener('submit', function (e) {
-                e.preventDefault();
+        function createMessageItem(message) {
+            var item = document.createElement('li'),
+                author = document.createElement('author'),
+                text = document.createElement('p'),
+                time = document.createElement('time');
 
-                input = input || document.querySelector('#m');
-                socket.emit('chat message', input.value);
-                input.value = '';
-        });
+            item.className = 'message';
+            author.textContent = message.user;
+            text.textContent = message.text;
+            time.textContent = message.datetime;
+            time.setAttribute('datetime', message.datetime);
 
-        socket.on('chat message', function (msg) {
-            var item;
-            list = list || document.querySelector('#messages');
-            item = document.createElement('li');
-            item.appendChild(document.createTextNode(msg));
-            list.appendChild(item);
-        });
+            item.appendChild(author);
+            item.appendChild(text);
+            item.appendChild(time);
 
-        socket.on('user disconnect', function () {
-            var item;
+            return item;
+        }
+
+        function createUserConnectedNotification(data) {
+            var item,
+                time = document.createElement('time');
+
             list = list || document.querySelector('#messages');
             item = document.createElement('li');
             item.className = 'notification';
-            item.appendChild(document.createTextNode("user got disconnected."));
-            list.appendChild(item);
+            item.appendChild(document.createTextNode("user " + data.user + " is online."));
+
+            time.textContent = data.datetime;
+            time.setAttribute('datetime', data.datetime);
+
+            item.appendChild(time);
+
+            return item;
+        }
+
+        function createDisconnectedNotification(data) {
+            var item,
+                time = document.createElement('time');
+
+            list = list || document.querySelector('#messages');
+            item = document.createElement('li');
+            item.className = 'notification';
+            item.appendChild(document.createTextNode("user " + data.user + " got disconnected."));
+
+            time.textContent = data.datetime;
+            time.setAttribute('datetime', data.datetime);
+
+            item.appendChild(time);
+
+            return item;
+        }
+
+        function createConnectedNotification(data) {
+            var item,
+                time = document.createElement('time');
+
+            list = list || document.querySelector('#messages');
+            item = document.createElement('li');
+            item.className = 'notification';
+            item.appendChild(document.createTextNode("You're connected!"));
+
+            //time.textContent = data.datetime;
+            time.setAttribute('datetime', new Date());
+
+            item.appendChild(time);
+
+            return item;
+        }
+
+        document.querySelector('form').addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            input = input || document.querySelector('#m');
+            socket.emit('chat message', input.value);
+            input.value = '';
+        });
+
+        socket.on('chat message', function (message) {
+            list = list || document.querySelector('#messages');
+            list.appendChild(createMessageItem(message));
+        });
+
+        socket.on('user connected', function (data) {
+            list = list || document.querySelector('#messages');
+            list.appendChild(createUserConnectedNotification(data));
+        });
+
+        socket.on('user disconnect', function (data) {
+            list.appendChild(createDisconnectedNotification(data));
         });
 
         socket.on('error', function (errorMsg) {
             console.error(errorMsg);
             alert(errorMsg);
+        });
+
+        socket.on('connect', function () {
+            list = list || document.querySelector('#messages');
+            list.appendChild(createConnectedNotification());
         });
     </script>
 </body>

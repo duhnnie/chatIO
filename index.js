@@ -1,7 +1,8 @@
 var app = require('express')(),
     http = require('http').Server(app),
     io = require('socket.io')(http),
-    users = {};
+    users = {},
+    nicknames = {};
 
 app.get('/', function (req, res) {
     res.sendFile(__dirname + '/index.html');
@@ -9,17 +10,23 @@ app.get('/', function (req, res) {
 
 io.use(function (socket, next) {
     var handshakeData = socket.request,
-        nickname = socket.handshake.query['nickname']; //handshakeData._query['nickname'];
+        nickname = socket.handshake.query['nickname'],
+        userObject; //handshakeData._query['nickname'];
 
-    if (!nickname || !nickname.trim()) {
+    nickname = nickname.trim();
+
+    if (!nickname) {
         return next(new Error("invalid nickname!"));
     }
-    
+
     console.log("Logging with nickname: " + nickname + '...');
 
-    if (!users[nickname]) {
-        users[nickname] = socket;        
-        next();    
+    if (!nicknames[nickname]) {
+        nicknames[nickname] = users[socket.id] = {
+            nickname: nickname,
+            socket: socket
+        };
+        next();
         console.log(nickname + ' logged.');
     } else {
         console.log("nickname \"" + nickname + "\" already taken.");
@@ -32,11 +39,26 @@ io.on('connection', function (socket) {
 
     socket.on('disconnect', function () {
         console.log('user disconnected');
-        io.emit('user disconnect');
+        io.emit('user disconnect', {
+            user: users[this.id].nickname,
+            datetime: (new Date()).toString()
+        });
+
+        delete nicknames[users[this.id].nickname];
+        delete users[this.id];
     });
 
     socket.on('chat message', function (msg) {
-        io.emit('chat message', msg);
+        io.emit('chat message', {
+            user: users[this.id].nickname,
+            text: msg,
+            datetime: (new Date()).toString()
+        });
+    });
+
+    socket.broadcast.emit('user connected', {
+        user: users[socket.id].nickname,
+        datetime: (new Date()).toString()
     });
 });
 
