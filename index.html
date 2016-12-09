@@ -1,189 +1,392 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="utf-8"/>
-    <title>Socket.IO chat</title>
-    <style type="text/css">
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+    <head>
+        <meta charset="utf-8"/>
+        <title>Chat HTML</title>
+        <style>
+            @font-face {
+                font-family: 'abeezeeregular';
+                src: url('fonts/abeezee-regular-webfont.woff2') format('woff2'),
+                     url('fonts/abeezee-regular-webfont.woff') format('woff');
+                font-weight: normal;
+                font-style: normal;
 
-        body {
-            font: 13px Helvetica, Arial;
-        }
+            }
+            body, button, input {
+                font-family: 'abeezeeregular';
+            }
+            body {
+                margin: auto;
 
-        form {
-            background: #000;
-            padding: 3px;
-            position: fixed;
-            bottom: 0;
-            width: 100%;
-        }
+            }
+            #container {
+                background: #F8F8f8;
+                height: 770px;
+                display: flex;
+                flex-direction: column;
+                flex-wrap: nowrap;
+            }
+            #header {
+                background: #444444;
+                flex: 0 1 auto;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                color: beige;
+            }
+            #header > * {
+                margin: 3px 20px;
+            }
+            #avatar {
+                display: flex;
+                align-items: center;
+            }
+            #username {
+                margin: 0 10px;
+            }
+            #user-picture,
+            .user-icon {
+                text-align: center;
+                vertical align: center;
+                color: white;
+            }
+            #user-picture {
+                width: 60px;
+                height: 60px;
+                border: 2px solid #d0d0d0;
+                border-radius: 100%;
+                display: inline-block;
+                line-height: 60px;
+            }
+            #body {
+                background: #888888;
+                flex: 1 1 auto;
+                display: flex;
+                flex-direction: row;
+            }
+            #messages,
+            #users {
+                margin: 0;
+                list-style: none;
+                padding: 0px;
+                overflow-x: hidden;
+                overflow-y: auto;
+            }
+            #messages {
+                flex: 70 1 auto;
+            }
+            #messages li {
+                background: #ccc;
+                font-size: 14px;
+                padding: 1em;
+                margin: 1em 0;
+            }
+            #messages datetime {
+                font-size: .7em;
+                float: right;
+            }
+            #users {
+                max-width: 30%;
+                background: #666666;
+                flex: 30 1 auto;
+                color: azure;
+            }
+            #footer {
+                background: black;
+                flex: 0 1 auto;
+            }
+            #message-input {
+                width: 90%;
+                font-size: 16px;
+                padding: .5em;
+                color: beige;
+                background: black;
+                border: none;
+            }
+            #send-button {
+                width: 8%;
+                border: none;
+                box-sizing: border-box;
+                margin: 0;
+                padding: 11px;
+                font-size: 12px;
+                background: tomato;
+                color: white
+            }
+            .author {
+                font-weight: bold;
+                font-size: 1.2em;
+                margin-bottom: 0.3em;
+            }
+            .circle {
+                border-radius: 100%;
+            }
+            .user-avatar {
+                padding: 5px;
+                height: auto;
+                display: flex;
+                flex-direction: row;
+                align-items: center;
+            }
+            .user-avatar .user-icon {
+                height: 50px;
+                width: 50px;
+                line-height: 50px;
+            }
+            .user-avatar span {
+                margin-left: 0.5em;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+            .notification {
+                font-style: italic;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="container">
+            <header id="header">
+                <h1 id="title">Chat.io</h1>
+                <div id="avatar">
+                    <span id="username"></span>
+                </div>
 
-        form input {
-            border: 0;
-            padding: 10px;
-            width: 90%;
-            margin-right: .5%;
-        }
+            </header>
+            <div id="body">
+                <ul id="messages"></ul>
+                <ul id="users"></ul>
+            </div>
+            <footer id="footer">
+                <form>
+                    <input id="message-input" placeholder="Escribe aqu&iacute;" type="text"/>
+                    <button id="send-button">Enviar</button>
+                </form>
+            </footer>
+        </div>
+        <script src="/socket.io/socket.io.js"></script>
+        <script type="text/javascript">
+            var socket,
+                nickname,
+                list,
+                input,
+                container,
+                usersList,
+                colorsA = [ "tomato", "gold", "turquoise", "palevioletred", "orange", "cornflowerblue"],
+                colorsB = [],
+                colorsTarget = colorsA,
+                users = {},
+                MESSAGE_TYPE = {
+                    MESSAGE: 1,
+                    CONNECTED: 2,
+                    ONLINE: 3,
+                    DISCONNECTED: 4
+                };
 
-        form button {
-            width: 9%;
-            background: rgb(130, 224, 255);
-            border: none;
-            padding: 10px;
-        }
+            function formatNickname(nickname) {
+                return nickname.match(/\b(\w)/g).slice(0, 2).join("").toUpperCase();
+            }
 
-        #messages {
-            list-style-type: none;
-            margin: 0;
-            padding: 0;
-        }
+            function getColor () {
+                var index,
+                    selectedColor,
+                    otherColors;
 
-        .notification {
-            color: #888888;
-            font-style: italic;
-        }
+                if (colorsTarget.length === 0) {
+                    colorsTarget = colorsTarget === colorsA ? colorsB : colorsA;
+                }
 
-        .message {
-            background: #DFDFDF;
-            padding: .5em;
-            position: relative;
-        }
+                otherColors = colorsTarget === colorsA ? colorsB : colorsA;
 
-        .message author {
-            font-weight: bold;
-            margin-bottom: .5em;
-        }
+                index = Math.round(Math.random() * colorsTarget.length - 1);
+                selectedColor = colorsTarget.splice(index, 1)[0];
+                otherColors.push(selectedColor);
+                console.log(colorsA, colorsB);
+                return selectedColor;
+            };
 
-        .message time {
-            font-size: 10px;
-            font-style: italic;
-            position: absolute;
-            bottom: 0.5em;
-            right: 0.5em;
-        }
+            function initAvatar() {
+                var div = document.createElement('div');
+                div.className = 'circle';
+                div.id = "user-picture";
+                div.style.backgroundColor = users[nickname].color;
+                div.appendChild(document.createTextNode(formatNickname(nickname)));
+                document.getElementById('avatar').appendChild(div);
+                document.getElementById('username').appendChild(document.createTextNode(nickname));
+            }
 
-        .message p {
-            margin: 0;
-        }
-    </style>
-</head>
-<body>
-    <ul id="messages"></ul>
-    <form action="">
-        <input id="m" autocomplete="off"/>
-        <button>Send</button>
-    </form>
-    <script src="/socket.io/socket.io.js"></script>
-    <script type="text/javascript">
-        var socket = io(undefined, {query: "nickname=" + prompt("Enter your nickname:")}),
-            input,
-            list;
+            function appendMessage(type, message) {
+                var textNode,
+                    messageHTML,
+                    content = [],
+                    datetime,
+                    span,
+                    color,
+                    aux;
 
-        function createMessageItem(message) {
-            var item = document.createElement('li'),
-                author = document.createElement('author'),
-                text = document.createElement('p'),
-                time = document.createElement('time');
+                datetime = document.createElement('datetime');
+                datetime.datetime = datetime.textContent = (message && message.datetime) || "2016-08-12";
 
-            item.className = 'message';
-            author.textContent = message.user;
-            text.textContent = message.text;
-            time.textContent = message.datetime;
-            time.setAttribute('datetime', message.datetime);
+                switch (type) {
+                    case MESSAGE_TYPE.ONLINE:
+                        textNode = document.createTextNode("Estás connectado!");
+                        span = document.createElement('span');
+                        span.appendChild(textNode);
+                        aux = document.createElement('div');
+                        aux.className = 'notification';
+                        aux.appendChild(span);
+                        aux.appendChild(datetime);
+                        content.push(aux);
+                        break;
+                    case MESSAGE_TYPE.MESSAGE:
+                        aux = document.createElement('div');
+                        aux.className = "author";
+                        aux.appendChild(document.createTextNode(message.user));
+                        content.push(aux);
+                        span = document.createElement('span');
+                        span.appendChild(document.createTextNode(message.text));
+                        aux = document.createElement('div');
+                        aux.appendChild(span);
+                        aux.appendChild(datetime);
+                        aux.className = "message-content";
+                        content.push(aux);
+                        color = users[message.user].color;
+                        break;
+                    case MESSAGE_TYPE.CONNECTED:
+                        aux = document.createElement('strong');
+                        aux.appendChild(document.createTextNode(message.user));
+                        span = document.createElement('span');
+                        span.appendChild(aux);
+                        span.appendChild(document.createTextNode(" se ha unido a la sala de chat."));
+                        aux = document.createElement('div');
+                        aux.className = 'notification';
+                        aux.appendChild(span);
+                        aux.appendChild(datetime);
+                        content.push(aux);
+                        color = users[message.user].color;
+                        break;
+                    case MESSAGE_TYPE.DISCONNECTED:
+                        aux = document.createElement('strong');
+                        aux.appendChild(document.createTextNode(message.user));
+                        span = document.createElement('span');
+                        span.appendChild(aux);
+                        span.appendChild(document.createTextNode(" ha dejado la sala de chat."));
+                        aux = document.createElement('div');
+                        aux.className = 'notification';
+                        aux.appendChild(span);
+                        aux.appendChild(datetime);
+                        content.push(aux);
+                        color = users[message.user].color;
+                        break;
+                }
 
-            item.appendChild(author);
-            item.appendChild(text);
-            item.appendChild(time);
+                messageHTML = document.createElement('li');
 
-            return item;
-        }
+                content.forEach(function (item) {
+                    messageHTML.appendChild(item);
+                });
 
-        function createUserConnectedNotification(data) {
-            var item,
-                time = document.createElement('time');
+                list.appendChild(messageHTML);
+                messageHTML.style.backgroundColor = color;
+                list.scrollTop = list.scrollHeight;
+            }
 
-            list = list || document.querySelector('#messages');
-            item = document.createElement('li');
-            item.className = 'notification';
-            item.appendChild(document.createTextNode("user " + data.user + " is online."));
+            function updateChatSize() {
+                container.style.width = window.innerWidth + "px";
+                container.style.height = window.innerHeight + "px";
+            }
 
-            time.textContent = data.datetime;
-            time.setAttribute('datetime', data.datetime);
+            function addUserToList(nickname) {
+                var li = document.createElement('li'),
+                    div = document.createElement('div'),
+                    avatar = document.createElement('div'),
+                    span = document.createElement('span');
 
-            item.appendChild(time);
+                users[nickname] = {
+                    color: getColor()
+                };
 
-            return item;
-        }
+                div.className = 'user-avatar';
+                avatar.className = 'circle user-icon';
+                avatar.appendChild(document.createTextNode(formatNickname(nickname)));
+                span.appendChild(document.createTextNode(nickname));
 
-        function createDisconnectedNotification(data) {
-            var item,
-                time = document.createElement('time');
+                div.appendChild(avatar);
+                div.appendChild(span);
+                li.appendChild(div);
 
-            list = list || document.querySelector('#messages');
-            item = document.createElement('li');
-            item.className = 'notification';
-            item.appendChild(document.createTextNode("user " + data.user + " got disconnected."));
+                li.id = "user-" + nickname;
+                avatar.style.backgroundColor = users[nickname].color;
 
-            time.textContent = data.datetime;
-            time.setAttribute('datetime', data.datetime);
+                usersList.appendChild(li);
+            };
 
-            item.appendChild(time);
+            function setUsersList(users) {
+                while (usersList.hasChildNodes()) {
+                    usersList.childNodes[0].remove();
+                }
+                users.forEach(function (item) {
+                    addUserToList(item);
+                });
+            }
 
-            return item;
-        }
+            document.addEventListener('DOMContentLoaded', function () {
+                nickname = prompt("Enter your nickname:");
+                socket = io(undefined, {query: "nickname=" + nickname});
 
-        function createConnectedNotification(data) {
-            var item,
-                time = document.createElement('time');
+                socket.on('error', function (errorMsg) {
+                    console.error(errorMsg);
+                    alert(errorMsg);
+                });
 
-            list = list || document.querySelector('#messages');
-            item = document.createElement('li');
-            item.className = 'notification';
-            item.appendChild(document.createTextNode("You're connected!"));
+                socket.on('connect', function () {
+                    users[nickname] = {
+                        color: getColor()
+                    }
+                    initAvatar();
+                    appendMessage(MESSAGE_TYPE.ONLINE);
+                });
 
-            //time.textContent = data.datetime;
-            time.setAttribute('datetime', new Date());
+                socket.on('disconnect', function () {
+                    users = {};
+                });
 
-            item.appendChild(time);
+                socket.on('chat message', function (message) {
+                    appendMessage(MESSAGE_TYPE.MESSAGE, message);
+                });
 
-            return item;
-        }
+                socket.on('user connected', function (data) {
+                    addUserToList(data.user);
+                    appendMessage(MESSAGE_TYPE.CONNECTED, data);
+                });
 
-        document.querySelector('form').addEventListener('submit', function (e) {
-            e.preventDefault();
+                socket.on('user disconnect', function (data) {
+                    appendMessage(MESSAGE_TYPE.DISCONNECTED, data);
+                    document.getElementById('user-' + data.user).remove();
+                });
 
-            input = input || document.querySelector('#m');
-            socket.emit('chat message', input.value);
-            input.value = '';
-        });
+                socket.on('users_list', function (data) {
+                    setUsersList(data);
+                });
 
-        socket.on('chat message', function (message) {
-            list = list || document.querySelector('#messages');
-            list.appendChild(createMessageItem(message));
-        });
+                document.querySelector('form').addEventListener('submit', function (e) {
+                    e.preventDefault();
+                    socket.emit('chat message', input.value);
+                    input.value = '';
+                });
 
-        socket.on('user connected', function (data) {
-            list = list || document.querySelector('#messages');
-            list.appendChild(createUserConnectedNotification(data));
-        });
+                window.addEventListener('resize', function () {
+                    updateChatSize();
+                });
 
-        socket.on('user disconnect', function (data) {
-            list.appendChild(createDisconnectedNotification(data));
-        });
+                list = document.querySelector('#messages');
+                input = document.getElementById('message-input');
+                container = document.getElementById('container');
+                usersList = document.getElementById('users');
 
-        socket.on('error', function (errorMsg) {
-            console.error(errorMsg);
-            alert(errorMsg);
-        });
+                updateChatSize();
+            });
 
-        socket.on('connect', function () {
-            list = list || document.querySelector('#messages');
-            list.appendChild(createConnectedNotification());
-        });
-    </script>
-</body>
+        </script>
+    </body>
 </html>

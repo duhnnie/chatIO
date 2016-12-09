@@ -8,10 +8,15 @@ app.get('/', function (req, res) {
     res.sendFile(__dirname + '/index.html');
 });
 
+app.get('/fonts/*', function (req, res) {
+    res.sendFile(__dirname + req.originalUrl);
+});
+
 io.use(function (socket, next) {
     var handshakeData = socket.request,
         nickname = socket.handshake.query['nickname'],
-        userObject; //handshakeData._query['nickname'];
+        userObject,
+        otherUsers;
 
     nickname = nickname.trim();
 
@@ -22,9 +27,11 @@ io.use(function (socket, next) {
     console.log("Logging with nickname: " + nickname + '...');
 
     if (!nicknames[nickname]) {
+        otherUsers = Object.keys(nicknames);
         nicknames[nickname] = users[socket.id] = {
             nickname: nickname,
-            socket: socket
+            socket: socket,
+            usersList: otherUsers
         };
         next();
         console.log(nickname + ' logged.');
@@ -36,6 +43,9 @@ io.use(function (socket, next) {
 
 io.on('connection', function (socket) {
     console.log('a user connected');
+
+    socket.emit('users_list', users[socket.id].usersList);
+    delete users[socket.id].usersList;
 
     socket.on('disconnect', function () {
         console.log('user disconnected');
