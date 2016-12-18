@@ -66,6 +66,18 @@ io.on('connection', function (socket) {
         });
     });
 
+    socket.on('typing', function () {
+        this.broadcast.emit('typing', {
+            user: users[socket.id].nickname
+        });
+    });
+
+    socket.on('stop typing', function () {
+        this.broadcast.emit('stop typing', {
+            user: users[socket.id].nickname
+        });
+    });
+
     socket.broadcast.emit('user connected', {
         user: users[socket.id].nickname,
         datetime: (new Date()).toString()
