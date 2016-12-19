@@ -414,12 +414,15 @@
                 });
 
                 document.querySelector('form').addEventListener('submit', function (e) {
+                    var inputValue = input.value.trim();
                     e.preventDefault();
-                    socket.emit('stop typing');
-                    socket.emit('chat message', input.value);
-                    input.value = '';
                     clearTimeout(timeoutHandler);
+                    socket.emit('stop typing');
                     isTyping = false;
+                    if (inputValue) {
+                        socket.emit('chat message', inputValue);
+                    }
+                    input.value = '';
                 });
 
                 window.addEventListener('resize', function () {

@@ -60,11 +60,13 @@ io.on('connection', function (socket) {
     });
 
     socket.on('chat message', function (msg) {
-        io.emit('chat message', {
-            user: users[this.id].nickname,
-            text: msg,
-            datetime: (new Date()).toString()
-        });
+        if (msg = msg.trim()) {
+            io.emit('chat message', {
+                user: users[this.id].nickname,
+                text: msg,
+                datetime: (new Date()).toString()
+            });
+        }
     });
 
     socket.on('typing', function () {
