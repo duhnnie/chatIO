@@ -1,8 +1,10 @@
+const UserManager = require('./lib/UserManager'),
+    Errors = require('./lib/Errors');
+
 var app = require('express')(),
     http = require('http').Server(app),
-    io = require('socket.io')(http),
-    users = {},
-    nicknames = {},
+    io = require('socket.io')(http)
+    userManager = new UserManager(),
     port = process.env.PORT || 3000;
 
 app.get('/', function (req, res) {
@@ -13,56 +15,74 @@ app.get('/fonts/*', function (req, res) {
     res.sendFile(__dirname + req.originalUrl);
 });
 
+userManager.setOnUserRemove(function (manager, user) {
+    var nickname;
+
+    console.log("User " + user.getNickname() + " got disconnected!");
+
+    io.emit('user disconnect', {
+        user: user.getNickname(),
+        datetime: (new Date()).toString()
+    });
+});
+
 io.use(function (socket, next) {
     var handshakeData = socket.request,
         nickname = socket.handshake.query['nickname'],
-        userObject,
+        uid = socket.handshake.query['uid'],
+        user,
         otherUsers;
 
-    nickname = nickname.trim();
+    try {
+        console.log("New connection petition using " + (uid ? 'uid: ' + uid : 'nickname: ' + nickname));
+        if (uid) {
+            if (user = userManager.getUserByUID(uid)) {
+                user.addSocket(socket);
+            } else {
+                return next(new Errors.UserNotFoundError(uid));
+            }
+        }
 
-    if (!nickname) {
-        return next(new Error("invalid nickname!"));
-    }
-
-    console.log("Logging with nickname: " + nickname + '...');
-
-    if (!nicknames[nickname]) {
-        otherUsers = Object.keys(nicknames);
-        nicknames[nickname] = users[socket.id] = {
-            nickname: nickname,
-            socket: socket,
-            usersList: otherUsers
-        };
+        if (!user) {
+            userManager.addUser({
+                nickname: nickname,
+                sockets: [socket]
+            });
+        }
         next();
-        console.log(nickname + ' logged.');
-    } else {
-        console.log("nickname \"" + nickname + "\" already taken.");
-        next(new Error("nickname \"" + nickname + "\" already taken."));
+    } catch (e) {
+        // TODO: Not all the errors should be returned explicitly.
+        console.log("Error: ", e.message);
+        next(new Error("Error: " + e.message));
     }
 });
 
 io.on('connection', function (socket) {
-    console.log('a user connected');
+    var connectedUser = userManager.getUserBySocket(socket),
+        connectedUserUID = connectedUser.getUID()
+        connectedUserNickname = connectedUser.getNickname();
 
-    socket.emit('users_list', users[socket.id].usersList);
-    delete users[socket.id].usersList;
+    console.log('New client for user "' + connectedUserNickname + '" connected!');
+
+    socket.emit('init_data', {
+        uid: connectedUserUID,
+        nickname: connectedUserNickname,
+        users: userManager.getUsers(connectedUserUID).map(function (user) {
+            return user.getNickname()
+        }),
+        numClients: connectedUser.getNumSockets()
+    });
 
     socket.on('disconnect', function () {
-        console.log('user disconnected');
-        io.emit('user disconnect', {
-            user: users[this.id].nickname,
-            datetime: (new Date()).toString()
-        });
+        console.log('A client for user "' + connectedUserNickname + '" got disconnected! (' + (connectedUser.getNumSockets() - 1) + " left)");
 
-        delete nicknames[users[this.id].nickname];
-        delete users[this.id];
+        connectedUser.removeSocket(this);
     });
 
     socket.on('chat message', function (msg) {
         if (msg = msg.trim()) {
             io.emit('chat message', {
-                user: users[this.id].nickname,
+                user: connectedUserNickname,
                 text: msg,
                 datetime: (new Date()).toString()
             });
@@ -71,18 +91,18 @@ io.on('connection', function (socket) {
 
     socket.on('typing', function () {
         this.broadcast.emit('typing', {
-            user: users[socket.id].nickname
+            user: connectedUserNickname
         });
     });
 
     socket.on('stop typing', function () {
         this.broadcast.emit('stop typing', {
-            user: users[socket.id].nickname
+            user: connectedUserNickname
         });
     });
 
     socket.broadcast.emit('user connected', {
-        user: users[socket.id].nickname,
+        user: connectedUserNickname,
         datetime: (new Date()).toString()
     });
 });

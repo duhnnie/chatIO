@@ -360,19 +360,37 @@
             }
 
             document.addEventListener('DOMContentLoaded', function () {
-                nickname = prompt("Enter your nickname:");
-                socket = io(undefined, {query: "nickname=" + nickname});
+                var uid,
+                    query = '';
+
+                if (typeof(Storage) === 'undefined') {
+                    alert("Tu navegador no soporta este chat, actualízalo.");
+                    return;
+                }
+
+                uid = localStorage.getItem("chatio_uid");
+                //alert("uid: " + uid);
+
+                if (uid) {
+                    query = 'uid=' + uid;
+                    nickname = localStorage.getItem("chatio_nickname");
+                } else {
+                    nickname = prompt("Enter your nickname:") || "";
+
+                }
+                query += '&nickname=' + nickname;
+                // nickname = prompt("Enter your nickname:");
+                socket = io(undefined, {query: query});
 
                 socket.on('error', function (errorMsg) {
+                    localStorage.removeItem('chatio_nickname');
+                    localStorage.removeItem('chatio_uid');
+                    localStorage.removeItem('chatio_clients');
                     console.error(errorMsg);
                     alert(errorMsg);
                 });
 
                 socket.on('connect', function () {
-                    users[nickname] = {
-                        color: getColor()
-                    }
-                    initAvatar();
                     appendMessage(MESSAGE_TYPE.ONLINE);
 
                     socket.on('typing', function (data) {
@@ -388,7 +406,21 @@
                     });
                 });
 
+                socket.on('init_data', function (data) {
+                    localStorage.setItem("chatio_uid", data.uid);
+                    localStorage.setItem("chatio_nickname", data.nickname);
+                    localStorage.setItem("chatio_clients", data.numClients);
+
+                    users[data.nickname] = {
+                        color: getColor()
+                    }
+                    initAvatar();
+
+                    setUsersList(data.users);
+                });
+
                 socket.on('disconnect', function () {
+                    alert("disconnected");
                     users = {};
                 });
 
@@ -409,8 +441,8 @@
                     document.getElementById('user-' + data.user).remove();
                 });
 
-                socket.on('users_list', function (data) {
-                    setUsersList(data);
+                socket.on('client_update', function (data) {
+                    alert('client_update', JSON.stringify(data))
                 });
 
                 document.querySelector('form').addEventListener('submit', function (e) {
@@ -427,6 +459,23 @@
 
                 window.addEventListener('resize', function () {
                     updateChatSize();
+                });
+
+                window.addEventListener('storage', function (e) {
+                    console.log("storage!!", arguments);
+                    e.preventDefault();
+                }, false);
+
+                window.addEventListener('unload', function (e) {
+                    var numClients = parseInt(localStorage.getItem('chatio_clients'), 10);
+
+                    localStorage.setItem('chatio_clients', numClients - 1);
+
+                    if(numClients < 2) {
+                        localStorage.removeItem('chatio_nickname');
+                        localStorage.removeItem('chatio_uid');
+                        localStorage.removeItem('chatio_clients');
+                    }
                 });
 
                 list = document.querySelector('#messages');
