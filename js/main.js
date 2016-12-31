@@ -181,6 +181,10 @@ document.addEventListener("DOMContentLoaded", function () {
     DOM.usersList = document.getElementById('users');
     DOM.sendButton = document.getElementById('send-button');
 
+    if (!window.SharedWorker) {
+        return alert("Tu navegador no soporta SharedWorkers, intenta con otro navegador\n/Your browser doesn't support SharedWorkers, try it on another browser.");
+    }
+
     worker = new SharedWorker('js/worker.js');
 
     worker.port.addEventListener("message", function (e) {
