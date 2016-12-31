@@ -1,0 +1,138 @@
+@font-face {
+    font-family: 'abeezeeregular';
+    src: url('../fonts/abeezee-regular-webfont.woff2') format('woff2'),
+         url('../fonts/abeezee-regular-webfont.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+
+}
+body, button, input {
+    font-family: 'abeezeeregular';
+}
+body {
+    margin: auto;
+
+}
+#container {
+    background: #F8F8f8;
+    height: 770px;
+    display: flex;
+    flex-direction: column;
+    flex-wrap: nowrap;
+}
+#header {
+    background: #444444;
+    flex: 0 1 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: beige;
+}
+#header > * {
+    margin: 3px 20px;
+}
+#avatar {
+    display: flex;
+    align-items: center;
+}
+#username {
+    margin: 0 10px;
+}
+#user-picture,
+.user-icon {
+    text-align: center;
+    vertical align: center;
+    color: white;
+}
+#user-picture {
+    width: 60px;
+    height: 60px;
+    border: 2px solid #d0d0d0;
+    border-radius: 100%;
+    display: inline-block;
+    line-height: 60px;
+}
+#body {
+    background: #888888;
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: row;
+}
+#messages,
+#users {
+    margin: 0;
+    list-style: none;
+    padding: 0px;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+#messages {
+    flex: 70 1 auto;
+}
+#messages li {
+    background: #ccc;
+    font-size: 14px;
+    padding: 1em;
+    margin: 1em 0;
+}
+#messages datetime {
+    font-size: .7em;
+    float: right;
+}
+#users {
+    max-width: 30%;
+    background: #666666;
+    flex: 30 1 auto;
+    color: azure;
+}
+#footer {
+    background: black;
+    flex: 0 1 auto;
+}
+#message-input {
+    width: 90%;
+    font-size: 16px;
+    padding: .5em;
+    color: beige;
+    background: black;
+    border: none;
+}
+#send-button {
+    width: 8%;
+    border: none;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 11px;
+    font-size: 12px;
+    background: tomato;
+    color: white
+}
+.author {
+    font-weight: bold;
+    font-size: 1.2em;
+    margin-bottom: 0.3em;
+}
+.circle {
+    border-radius: 100%;
+}
+.user-avatar {
+    padding: 5px;
+    height: auto;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+.user-avatar .user-icon {
+    height: 50px;
+    width: 50px;
+    line-height: 50px;
+}
+.user-avatar span {
+    margin-left: 0.5em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.notification {
+    font-style: italic;
+}

@@ -1,9 +1,11 @@
+"use strict";
+
 const UserManager = require('./lib/UserManager'),
     Errors = require('./lib/Errors');
 
 var app = require('express')(),
     http = require('http').Server(app),
-    io = require('socket.io')(http)
+    io = require('socket.io')(http),
     userManager = new UserManager(),
     port = process.env.PORT || 3000;
 
@@ -15,12 +17,20 @@ app.get('/fonts/*', function (req, res) {
     res.sendFile(__dirname + req.originalUrl);
 });
 
+app.get('/js/*', function (req, res) {
+    res.sendFile(__dirname + req.originalUrl);
+});
+
+app.get('/css/*', function (req, res) {
+    res.sendFile(__dirname + req.originalUrl);
+});
+
 userManager.setOnUserRemove(function (manager, user) {
     var nickname;
 
     console.log("User " + user.getNickname() + " got disconnected!");
 
-    io.emit('user disconnect', {
+    io.emit('user_disconnect', {
         user: user.getNickname(),
         datetime: (new Date()).toString()
     });
@@ -58,32 +68,26 @@ io.use(function (socket, next) {
 });
 
 io.on('connection', function (socket) {
-    var connectedUser = userManager.getUserBySocket(socket),
-        connectedUserUID = connectedUser.getUID()
+    let connectedUser = userManager.getUserBySocket(socket),
+        connectedUserUID = connectedUser.getUID(),
         connectedUserNickname = connectedUser.getNickname();
 
-    console.log('New client for user "' + connectedUserNickname + '" connected!');
+    console.log(connectedUserNickname + " got connected!");
 
-    socket.emit('init_data', {
-        uid: connectedUserUID,
-        nickname: connectedUserNickname,
-        users: userManager.getUsers(connectedUserUID).map(function (user) {
-            return user.getNickname()
-        }),
-        numClients: connectedUser.getNumSockets()
-    });
+    socket.emit('user_data', userManager.getUserPrivateInfo(connectedUserUID));
 
     socket.on('disconnect', function () {
-        console.log('A client for user "' + connectedUserNickname + '" got disconnected! (' + (connectedUser.getNumSockets() - 1) + " left)");
+        console.log(connectedUserNickname + " got disconnected!");
 
         connectedUser.removeSocket(this);
     });
 
-    socket.on('chat message', function (msg) {
+    socket.on('chat_message', function (msg) {
         if (msg = msg.trim()) {
-            io.emit('chat message', {
+            io.emit('chat_message', {
                 user: connectedUserNickname,
                 text: msg,
+                color: connectedUser.getColor(),
                 datetime: (new Date()).toString()
             });
         }
@@ -95,14 +99,14 @@ io.on('connection', function (socket) {
         });
     });
 
-    socket.on('stop typing', function () {
+    socket.on('stop_typing', function () {
         this.broadcast.emit('stop typing', {
             user: connectedUserNickname
         });
     });
 
-    socket.broadcast.emit('user connected', {
-        user: connectedUserNickname,
+    socket.broadcast.emit('user_connected', {
+        user: userManager.getUserInfo(connectedUserUID),
         datetime: (new Date()).toString()
     });
 });
