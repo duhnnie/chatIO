@@ -22,19 +22,19 @@ function initConnection(nickname) {
             postToAll({
                 cmd: COMMANDS.CONNECTED
             });
+        });
 
-            socket.on('typing', function (data) {
-                postToAll({
-                    cmd: COMMANDS.TYPING,
-                    data: data.user
-                });
+        socket.on('typing', function (data) {
+            postToAll({
+                cmd: COMMANDS.TYPING,
+                data: data.user
             });
+        });
 
-            socket.on('stop typing', function (data) {
-                postToAll({
-                    cmd: COMMANDS.STOP_TYPING,
-                    data: data.user
-                });
+        socket.on('stop typing', function (data) {
+            postToAll({
+                cmd: COMMANDS.STOP_TYPING,
+                data: data.user
             });
         });
 
