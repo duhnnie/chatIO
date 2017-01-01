@@ -56,14 +56,14 @@ io.use(function (socket, next) {
         if (!user) {
             userManager.addUser({
                 nickname: nickname,
-                sockets: [socket]
+                socket: socket
             });
         }
         next();
     } catch (e) {
         // TODO: Not all the errors should be returned explicitly.
         console.log("Error: ", e.message);
-        next(new Error("Error: " + e.message));
+        next(new Error(e.message));
     }
 });
 
@@ -78,8 +78,7 @@ io.on('connection', function (socket) {
 
     socket.on('disconnect', function () {
         console.log(connectedUserNickname + " got disconnected!");
-
-        connectedUser.removeSocket(this);
+        userManager.removeUser(connectedUser);
     });
 
     socket.on('chat_message', function (msg) {

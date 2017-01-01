@@ -235,6 +235,9 @@ document.addEventListener("DOMContentLoaded", function () {
                 users = {};
                 setUsersList([]);
                 break;
+            case COMMANDS.ERROR:
+                alert("Error: " + data.data.message);
+                break;
             default:
                 throw new Error('Invalid command.');
         }
