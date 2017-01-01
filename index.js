@@ -39,26 +39,15 @@ userManager.setOnUserRemove(function (manager, user) {
 io.use(function (socket, next) {
     var handshakeData = socket.request,
         nickname = socket.handshake.query['nickname'],
-        uid = socket.handshake.query['uid'],
         user,
         otherUsers;
 
     try {
-        console.log("New connection petition using " + (uid ? 'uid: ' + uid : 'nickname: ' + nickname));
-        if (uid) {
-            if (user = userManager.getUserByUID(uid)) {
-                user.addSocket(socket);
-            } else {
-                return next(new Errors.UserNotFoundError(uid));
-            }
-        }
+        userManager.addUser({
+            nickname: nickname,
+            socket: socket
+        });
 
-        if (!user) {
-            userManager.addUser({
-                nickname: nickname,
-                socket: socket
-            });
-        }
         next();
     } catch (e) {
         // TODO: Not all the errors should be returned explicitly.
