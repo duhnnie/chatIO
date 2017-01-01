@@ -53,6 +53,7 @@ function initConnection(nickname) {
         });
 
         socket.on('user_connected', function (data) {
+            user.users.push(data.user);
             postToAll({
                 cmd: COMMANDS.USER_CONNECTED,
                 data: data.user
@@ -60,6 +61,14 @@ function initConnection(nickname) {
         });
 
         socket.on('user_disconnect', function (data) {
+            var index = user.users.findIndex(function (user) {
+                return user.nickname === data.user;
+            });
+
+            if (index >= 0) {
+                user.users.splice(index, 1);
+            }
+
             postToAll({
                 cmd: COMMANDS.USER_DISCONNECTED,
                 data: data.user
