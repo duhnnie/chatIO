@@ -27,6 +27,7 @@ body {
     align-items: center;
     justify-content: space-between;
     color: beige;
+    min-height: 70px;
 }
 #header > * {
     margin: 3px 20px;
@@ -81,6 +82,7 @@ body {
 }
 #users {
     max-width: 30%;
+    min-width: 248px;
     background: #666666;
     flex: 30 1 auto;
     color: azure;
