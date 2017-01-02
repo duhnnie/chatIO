@@ -227,6 +227,11 @@ document.addEventListener("DOMContentLoaded", function () {
                 break;
             case COMMANDS.RECEIVED_MESSAGE:
                 appendMessage(MESSAGE_TYPE.MESSAGE, data.data);
+                if (data.data.user === me.nickname) {
+                    DOM.sendButton.disabled = DOM.input.disabled = false;
+                    DOM.sendButton.textContent = "Enviar";
+                    DOM.input.placeholder = "Escribe aquí";
+                }
                 break;
             case COMMANDS.DISCONNECT:
                 DOM.sendButton.disabled = DOM.input.disabled = true;
@@ -272,9 +277,12 @@ document.addEventListener("DOMContentLoaded", function () {
         worker.port.postMessage({ cmd: COMMANDS.STOP_TYPING });
         isTyping = false;
         if (inputValue) {
+            DOM.sendButton.disabled = DOM.input.disabled = true;
+            DOM.sendButton.textContent = DOM.input.placeholder = "Enviando...";
             worker.port.postMessage({
                 cmd: COMMANDS.SEND_MESSAGE,
                 data: {
+                    id: Date.now(),
                     message: inputValue
                 }
             });

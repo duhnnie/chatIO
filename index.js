@@ -71,10 +71,11 @@ io.on('connection', function (socket) {
     });
 
     socket.on('chat_message', function (msg) {
-        if (msg = msg.trim()) {
+        if (msg.message = msg.message.trim()) {
             io.emit('chat_message', {
+                id: msg.id,
                 user: connectedUserNickname,
-                text: msg,
+                text: msg.message,
                 color: connectedUser.getColor(),
                 datetime: (new Date()).toString()
             });

@@ -118,7 +118,7 @@ function messageHandler(message, port) {
             socket.emit("stop_typing");
             break;
         case COMMANDS.SEND_MESSAGE:
-            socket.emit('chat_message', data.message);
+            socket.emit('chat_message', data);
             break;
         default:
             port.postMessage({
