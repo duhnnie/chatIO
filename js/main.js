@@ -3,7 +3,8 @@ const   MESSAGE_TYPE = {
         CONNECTED: 2,
         ONLINE: 3,
         DISCONNECTED: 4,
-        TYPING: 5
+        TYPING: 5,
+        OFFLINE: 6
     },
     DOM = {};
 
@@ -89,6 +90,16 @@ function appendMessage(type, message) {
                 (aux = document.getElementById('typing_notification')) ? aux.remove() : '';
                 return;
             }
+            break;
+        case MESSAGE_TYPE.OFFLINE:
+            textNode = document.createTextNode("Estás desconectado!");
+            span = document.createElement('span');
+            span.appendChild(textNode);
+            aux = document.createElement('div');
+            aux.className = 'notification';
+            aux.appendChild(span);
+            aux.appendChild(datetime);
+            content.push(aux);
             break;
     }
 
@@ -231,12 +242,13 @@ document.addEventListener("DOMContentLoaded", function () {
                     DOM.sendButton.disabled = DOM.input.disabled = false;
                     DOM.sendButton.textContent = "Enviar";
                     DOM.input.placeholder = "Escribe aquí";
+                    DOM.input.focus();
                 }
                 break;
             case COMMANDS.DISCONNECT:
                 DOM.sendButton.disabled = DOM.input.disabled = true;
                 DOM.sendButton.textContent = DOM.input.placeholder = "Sin conexión!";
-                alert("disconnected");
+                appendMessage(MESSAGE_TYPE.OFFLINE);
                 users = {};
                 setUsersList([]);
                 break;
