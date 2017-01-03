@@ -79,6 +79,9 @@ window.addEventListener('load', function () {
         },
         disconnected: function () {
             playSound(disconnectedSound);
+        },
+        connected: function () {
+            playSound(connectedSound);
         }
     };
 });
