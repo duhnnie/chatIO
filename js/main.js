@@ -51,6 +51,9 @@ function appendMessage(type, message) {
             aux.className = "message-content";
             content.push(aux);
             color = message.color;
+            if (message.user !== me.nickname) {
+                AUDIO.newMessage();
+            }
             break;
         case MESSAGE_TYPE.CONNECTED:
             aux = document.createElement('strong');
@@ -64,6 +67,7 @@ function appendMessage(type, message) {
             aux.appendChild(datetime);
             content.push(aux);
             color = message.color;
+            AUDIO.userConnected();
             break;
         case MESSAGE_TYPE.DISCONNECTED:
             aux = document.createElement('strong');
@@ -76,6 +80,7 @@ function appendMessage(type, message) {
             aux.appendChild(span);
             aux.appendChild(datetime);
             content.push(aux);
+            AUDIO.userDisconnected();
             break;
         case MESSAGE_TYPE.TYPING:
             if (typing.length) {
@@ -100,6 +105,7 @@ function appendMessage(type, message) {
             aux.appendChild(span);
             aux.appendChild(datetime);
             content.push(aux);
+            AUDIO.disconnected();
             break;
     }
 

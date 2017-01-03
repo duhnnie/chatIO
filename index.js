@@ -25,6 +25,10 @@ app.get('/css/*', function (req, res) {
     res.sendFile(__dirname + req.originalUrl);
 });
 
+app.get('/sounds/*', function (req, res) {
+    res.sendFile(__dirname + req.originalUrl);
+});
+
 userManager.setOnUserRemove(function (manager, user) {
     var nickname;
 
