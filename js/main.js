@@ -261,7 +261,7 @@ document.addEventListener("DOMContentLoaded", function () {
             case COMMANDS.DISCONNECT:
                 DOM.sendButton.disabled = DOM.input.disabled = true;
                 DOM.sendButton.textContent = DOM.input.placeholder = "Sin conexión!";
-                appendMessage(MESSAGE_TYPE.OFFLINE);
+                appendMessage(MESSAGE_TYPE.OFFLINE, data.data);
                 users = {};
                 setUsersList([]);
                 break;

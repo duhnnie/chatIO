@@ -43,7 +43,10 @@ function initConnection(nickname) {
 
         socket.on('disconnect', function () {
             postToAll({
-                cmd: COMMANDS.DISCONNECT
+                cmd: COMMANDS.DISCONNECT,
+                data: {
+                    datetime: Date.now()
+                }
             });
         });
 
