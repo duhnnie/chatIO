@@ -20,7 +20,10 @@ function initConnection(nickname) {
 
         socket.on('connect', function () {
             postToAll({
-                cmd: COMMANDS.CONNECTED
+                cmd: COMMANDS.CONNECTED,
+                data: {
+                    datetime: Date.now()
+                }
             });
         });
 
@@ -56,7 +59,7 @@ function initConnection(nickname) {
             user.users.push(data.user);
             postToAll({
                 cmd: COMMANDS.USER_CONNECTED,
-                data: data.user
+                data: data
             });
         });
 
@@ -71,7 +74,7 @@ function initConnection(nickname) {
 
             postToAll({
                 cmd: COMMANDS.USER_DISCONNECTED,
-                data: data.user
+                data: data
             });
         });
 

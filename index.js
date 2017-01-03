@@ -36,7 +36,7 @@ userManager.setOnUserRemove(function (manager, user) {
 
     io.emit('user_disconnect', {
         user: user.getNickname(),
-        datetime: (new Date()).toString()
+        datetime: Date.now()
     });
 });
 
@@ -81,7 +81,7 @@ io.on('connection', function (socket) {
                 user: connectedUserNickname,
                 text: msg.message,
                 color: connectedUser.getColor(),
-                datetime: (new Date()).toString()
+                datetime: Date.now()
             });
         }
     });
@@ -100,7 +100,7 @@ io.on('connection', function (socket) {
 
     socket.broadcast.emit('user_connected', {
         user: userManager.getUserInfo(connectedUserUID),
-        datetime: (new Date()).toString()
+        datetime: Date.now()
     });
 });
 

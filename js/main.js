@@ -25,7 +25,7 @@ function appendMessage(type, message) {
         aux;
 
     datetime = document.createElement('datetime');
-    datetime.datetime = datetime.textContent = (message && message.datetime) || "2016-08-12";
+    datetime.datetime = datetime.textContent = (message && formatDate(message.datetime)) || "2016-08-12";
 
     switch (type) {
         case MESSAGE_TYPE.ONLINE:
@@ -37,6 +37,7 @@ function appendMessage(type, message) {
             aux.appendChild(span);
             aux.appendChild(datetime);
             content.push(aux);
+            AUDIO.connected();
             break;
         case MESSAGE_TYPE.MESSAGE:
             aux = document.createElement('div');
@@ -57,7 +58,7 @@ function appendMessage(type, message) {
             break;
         case MESSAGE_TYPE.CONNECTED:
             aux = document.createElement('strong');
-            aux.appendChild(document.createTextNode(message.nickname));
+            aux.appendChild(document.createTextNode(message.user.nickname));
             span = document.createElement('span');
             span.appendChild(aux);
             span.appendChild(document.createTextNode(" se ha unido a la sala de chat."));
@@ -66,12 +67,12 @@ function appendMessage(type, message) {
             aux.appendChild(span);
             aux.appendChild(datetime);
             content.push(aux);
-            color = message.color;
+            color = message.user.color;
             AUDIO.userConnected();
             break;
         case MESSAGE_TYPE.DISCONNECTED:
             aux = document.createElement('strong');
-            aux.appendChild(document.createTextNode(message));
+            aux.appendChild(document.createTextNode(message.user));
             span = document.createElement('span');
             span.appendChild(aux);
             span.appendChild(document.createTextNode(" ha dejado la sala de chat."));
@@ -191,6 +192,12 @@ function updateChatSize() {
     DOM.container.style.height = window.innerHeight + "px";
 }
 
+function formatDate (milliseconds) {
+    var date = new Date(milliseconds);
+
+    return date.getFullYear() + '-' + (date.getMonth() + 1) + '-' + date.getDate() + ' ' + date.getHours() + ':' + date.getMinutes() + ':' + date.getSeconds();
+};
+
 document.addEventListener("DOMContentLoaded", function () {
     DOM.list = document.querySelector('#messages');
     DOM.input = document.getElementById('message-input');
@@ -214,7 +221,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 DOM.sendButton.disabled = DOM.input.disabled = false;
                 DOM.input.placeholder = "Escribe aquí";
                 DOM.sendButton.textContent = "Enviar";
-                appendMessage(MESSAGE_TYPE.ONLINE);
+                appendMessage(MESSAGE_TYPE.ONLINE, data.data);
                 break;
             case COMMANDS.USER_DATA:
                 me = data.data;
@@ -232,15 +239,15 @@ document.addEventListener("DOMContentLoaded", function () {
                 appendMessage(MESSAGE_TYPE.TYPING);
                 break;
             case COMMANDS.USER_CONNECTED:
-                addUserToList(data.data);
+                addUserToList(data.data.user);
                 appendMessage(MESSAGE_TYPE.CONNECTED, data.data);
                 break;
             case COMMANDS.USER_DISCONNECTED:
                 appendMessage(MESSAGE_TYPE.DISCONNECTED, data.data);
                 typing = typing.filter(function (user) {
-                    return user != data.data;
+                    return user != data.data.user;
                 });
-                document.getElementById('user-' + data.data).remove();
+                document.getElementById('user-' + data.data.user).remove();
                 break;
             case COMMANDS.RECEIVED_MESSAGE:
                 appendMessage(MESSAGE_TYPE.MESSAGE, data.data);
