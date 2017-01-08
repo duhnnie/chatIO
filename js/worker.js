@@ -103,7 +103,12 @@ function messageHandler(message, port) {
     switch (cmd) {
         case COMMANDS.CONNECT:
             if (user) {
-                port.postMessage({ cmd: COMMANDS.CONNECTED });
+                port.postMessage({
+                    cmd: COMMANDS.CONNECTED,
+                    data: {
+                        datetime: Date.now()
+                    }
+                });
                 port.postMessage({
                     cmd: COMMANDS.USER_DATA,
                     data: user
