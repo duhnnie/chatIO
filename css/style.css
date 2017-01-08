@@ -223,6 +223,17 @@ form {
     right: 0;
     outline: 0;
 }
+#unread {
+    position: absolute;
+    display: inline-block;
+    background: #444;
+    padding: 10px;
+    color: #EAEAEA;
+    border-radius: 20px;
+    text-decoration: none;
+    bottom: -40px;
+    left: 50%;
+}
 @media only screen and (max-width: 720px) {
     #users {
         display: none;

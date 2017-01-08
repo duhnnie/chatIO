@@ -14,6 +14,8 @@ var worker,
     isTyping = false,
     lastMessage = {},
     typing = [],
+    unread = [],
+    windowActive = true,
     users = {};
 
 function appendMessage(type, message) {
@@ -162,10 +164,13 @@ function appendMessage(type, message) {
         $(messageItem).fadeIn();
     }
 
-    if (aux) {
+    if ((aux && windowActive) || (type === MESSAGE_TYPE.MESSAGE && message.user === me.nickname)) {
         $(DOM.list).animate({
             scrollTop: DOM.list.scrollHeight - DOM.list.clientHeight
         });
+    } else if (!aux) {
+        unread.push(messageItem.offsetTop + messageItem.clientHeight);
+        handleUnreadNotification();
     }
 }
 
@@ -227,6 +232,25 @@ function formatDate (milliseconds) {
     return date.getHours() + ':' + date.getMinutes();
 };
 
+function handleUnreadNotification () {
+    var size;
+
+    DOM.unreadCount.textContent = unread.length;
+    if (unread.length) {
+        size = DOM.unread.clientWidth;
+        DOM.unread.style.marginLeft = (size * -0.5) + "px";
+
+        $(DOM.unread).animate({
+            bottom: '40px'
+        });
+    } else {
+        size = DOM.unread.clientHeight + 5;
+        $(DOM.unread).animate({
+            bottom: (size * -1) + "px"
+        });
+    }
+};
+
 document.addEventListener("DOMContentLoaded", function () {
     DOM.userAvatar = document.querySelector('#localuser-avatar');
     DOM.userName = document.querySelector('#localuser-name');
@@ -235,6 +259,8 @@ document.addEventListener("DOMContentLoaded", function () {
     DOM.usersList = document.querySelector('#users');
     DOM.sendButton = document.querySelector('#send-button');
     DOM.typing = document.querySelector("#typing");
+    DOM.unread = document.querySelector('#unread');
+    DOM.unreadCount = document.querySelector('#unread-count');
 
     if (!window.SharedWorker) {
         return alert("Tu navegador no soporta SharedWorkers, intenta con otro navegador\n/Your browser doesn't support SharedWorkers, try it on another browser.");
@@ -342,6 +368,35 @@ document.addEventListener("DOMContentLoaded", function () {
             });
         }
         DOM.input.value = '';
+    });
+
+    window.addEventListener('blur', function (e) {
+        windowActive = false;
+    }, false);
+
+    window.addEventListener('focus', function (e) {
+        windowActive = true;
+    }, false);
+
+    DOM.unread.addEventListener('click', function () {
+        unread = [];
+        handleUnreadNotification();
+        $(DOM.list).animate({
+            scrollTop: DOM.list.scrollHeight
+        });
+    }, false);
+
+    DOM.list.addEventListener('scroll', function () {
+        var scrolled = this.scrollTop + this.clientHeight;
+        if (scrolled === this.scrollHeight) {
+            unread = [];
+            handleUnreadNotification();
+        } else if (unread.length) {
+            if (this.scrollTop + this.clientHeight > unread[0]) {
+                unread.shift();
+                handleUnreadNotification();
+            }
+        }
     });
 
     worker.port.start();
