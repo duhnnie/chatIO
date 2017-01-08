@@ -34,6 +34,7 @@ userManager.setOnUserRemove(function (manager, user) {
 
     io.emit('user_disconnect', {
         user: user.getNickname(),
+        puid: user.getPUID(),
         datetime: Date.now()
     });
 

@@ -192,7 +192,7 @@ function addUserToList(user) {
     userAvatar.style.backgroundColor = user.color;
     userName.textContent = user.nickname;
 
-    userItem.id = "user-" + user.nickname;
+    userItem.id = "user-" + user.puid;
 
     userItem.appendChild(userAvatar);
     userItem.appendChild(userName);
@@ -278,7 +278,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 typing = typing.filter(function (user) {
                     return user != data.data.user;
                 });
-                $('#user-' + data.data.user).fadeOut();
+                $('#user-' + data.data.puid).fadeOut();
                 break;
             case COMMANDS.RECEIVED_MESSAGE:
                 appendMessage(MESSAGE_TYPE.MESSAGE, data.data);
