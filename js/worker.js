@@ -34,7 +34,7 @@ function initConnection(nickname) {
             });
         });
 
-        socket.on('stop typing', function (data) {
+        socket.on('stop_typing', function (data) {
             postToAll({
                 cmd: COMMANDS.STOP_TYPING,
                 data: data.user

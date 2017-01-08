@@ -30,13 +30,15 @@ app.get('/sounds/*', function (req, res) {
 });
 
 userManager.setOnUserRemove(function (manager, user) {
-    var nickname;
-
     console.log("User " + user.getNickname() + " got disconnected!");
 
     io.emit('user_disconnect', {
         user: user.getNickname(),
         datetime: Date.now()
+    });
+
+    io.emit('stop_typing', {
+        user: user.getNickname()
     });
 });
 
@@ -93,7 +95,7 @@ io.on('connection', function (socket) {
     });
 
     socket.on('stop_typing', function () {
-        this.broadcast.emit('stop typing', {
+        this.broadcast.emit('stop_typing', {
             user: connectedUserNickname
         });
     });
