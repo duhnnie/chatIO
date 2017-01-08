@@ -151,7 +151,7 @@ function appendMessage(type, message) {
         messageItem.appendChild(messageComponent);
     }
 
-    // Verify id the list is totally scrolled
+    // Verify if the list is totally scrolled
     aux = DOM.list.clientHeight + DOM.list.scrollTop === DOM.list.scrollHeight;
 
     DOM.list.appendChild(messageItem);
@@ -168,7 +168,8 @@ function appendMessage(type, message) {
         $(DOM.list).animate({
             scrollTop: DOM.list.scrollHeight - DOM.list.clientHeight
         });
-    } else if (!aux) {
+    } else if (DOM.list.clientHeight !== DOM.list.scrollHeight) {
+        // verify if is scrollable
         unread.push(messageItem.offsetTop + messageItem.clientHeight);
         handleUnreadNotification();
     }
