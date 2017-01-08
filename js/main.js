@@ -12,159 +12,193 @@ var worker,
     me,
     timeoutHandler,
     isTyping = false,
+    lastMessage = {},
     typing = [],
     users = {};
 
 function appendMessage(type, message) {
-    var textNode,
-        messageHTML,
-        content = [],
-        datetime,
-        span,
-        color,
-        aux;
-
-    datetime = document.createElement('datetime');
-    datetime.datetime = datetime.textContent = (message && formatDate(message.datetime)) || "2016-08-12";
+    var messageItem,
+        messageItemClassName,
+        component,
+        aux,
+        messageComponents = [];
 
     switch (type) {
         case MESSAGE_TYPE.ONLINE:
-            textNode = document.createTextNode("Estás connectado!");
-            span = document.createElement('span');
-            span.appendChild(textNode);
-            aux = document.createElement('div');
-            aux.className = 'notification';
-            aux.appendChild(span);
-            aux.appendChild(datetime);
-            content.push(aux);
-            AUDIO.connected();
+            messageItemClassName = "notification";
+
+            component = document.createElement("span");
+            component.textContent = "You're online!";
+            messageComponents.push(component);
+
+            component = document.createElement("span");
+            component.className = "message-time";
+            component.textContent = formatDate(message.datetime);
+            messageComponents.push(component);
             break;
         case MESSAGE_TYPE.MESSAGE:
-            aux = document.createElement('div');
-            aux.className = "author";
-            aux.appendChild(document.createTextNode(message.user));
-            content.push(aux);
-            span = document.createElement('span');
-            span.appendChild(document.createTextNode(message.text));
-            aux = document.createElement('div');
-            aux.appendChild(span);
-            aux.appendChild(datetime);
-            aux.className = "message-content";
-            content.push(aux);
-            color = message.color;
+            messageItemClassName = "message";
+
+            if (lastMessage.user !== message.user) {
+                if(message.user !== me.nickname) {
+                    component = document.createElement('h2');
+                    component.className = "message-author";
+                    component.textContent = message.user;
+                    messageComponents.push(component);
+                } else {
+                    messageItemClassName += " message-first";
+                }
+
+                component = document.createElement("div");
+                component.className = "avatar message-avatar";
+                component.style.backgroundColor = message.color;
+                component.textContent = formatNickname(message.user);
+                messageComponents.push(component);
+            }
+
+            component = document.createElement("div");
+            component.className = "message-text";
+            component.style.backgroundColor = message.user !== me.nickname ? '' : message.color;
+            component.textContent = message.text;
+            messageComponents.push(component);
+
+            component = document.createElement("span");
+            component.className = "message-time";
+            component.textContent = formatDate(message.datetime);
+            messageComponents.push(component);
+
+            component = document.createElement("div");
+            component.className = "clear";
+            messageComponents.push(component);
+
             if (message.user !== me.nickname) {
+                messageItemClassName += " incoming";
                 AUDIO.newMessage();
             }
+            lastMessage = message;
             break;
         case MESSAGE_TYPE.CONNECTED:
-            aux = document.createElement('strong');
-            aux.appendChild(document.createTextNode(message.user.nickname));
-            span = document.createElement('span');
-            span.appendChild(aux);
-            span.appendChild(document.createTextNode(" se ha unido a la sala de chat."));
-            aux = document.createElement('div');
-            aux.className = 'notification';
-            aux.appendChild(span);
-            aux.appendChild(datetime);
-            content.push(aux);
-            color = message.user.color;
+            messageItemClassName = "notification";
+
+            aux = document.createElement("strong");
+            aux.textContent = message.user.nickname;
+            component = document.createElement("span");
+            component.appendChild(aux);
+            component.appendChild(document.createTextNode(" joined the conversation"));
+            messageComponents.push(component);
+
+            component = document.createElement("span");
+            component.className = "message-time";
+            component.textContent = formatDate(message.datetime);
+            messageComponents.push(component);
             AUDIO.userConnected();
             break;
         case MESSAGE_TYPE.DISCONNECTED:
-            aux = document.createElement('strong');
-            aux.appendChild(document.createTextNode(message.user));
-            span = document.createElement('span');
-            span.appendChild(aux);
-            span.appendChild(document.createTextNode(" ha dejado la sala de chat."));
-            aux = document.createElement('div');
-            aux.className = 'notification';
-            aux.appendChild(span);
-            aux.appendChild(datetime);
-            content.push(aux);
+            messageItemClassName = "notification";
+
+            aux = document.createElement("strong");
+            aux.textContent = message.user;
+            component = document.createElement("span");
+            component.appendChild(aux);
+            component.appendChild(document.createTextNode(" left the conversation"));
+            messageComponents.push(component);
+
+            component = document.createElement("span");
+            component.className = "message-time";
+            component.textContent = formatDate(message.datetime);
+            messageComponents.push(component);
             AUDIO.userDisconnected();
             break;
         case MESSAGE_TYPE.TYPING:
             if (typing.length) {
-                span = document.createElement('span');
+                while (DOM.typing.hasChildNodes()) {
+                    DOM.typing.childNodes[0].remove();
+                }
                 aux = document.createElement('strong');
                 aux.appendChild(document.createTextNode(typing.join(', ')));
-                span.appendChild(aux);
-                span.appendChild(document.createTextNode((typing.length > 1 ? ' are' : ' is') + ' typing...'));
-
-                content.push(span);
+                DOM.typing.appendChild(aux);
+                DOM.typing.appendChild(document.createTextNode((typing.length > 1 ? ' are' : ' is') + ' typing...'));
+                $(DOM.typing).fadeIn();
             } else {
-                (aux = document.getElementById('typing_notification')) ? aux.remove() : '';
-                return;
+                $(DOM.typing).fadeOut();
             }
             break;
         case MESSAGE_TYPE.OFFLINE:
-            textNode = document.createTextNode("Estás desconectado!");
-            span = document.createElement('span');
-            span.appendChild(textNode);
-            aux = document.createElement('div');
-            aux.className = 'notification';
-            aux.appendChild(span);
-            aux.appendChild(datetime);
-            content.push(aux);
+            messageItemClassName = "notification";
+
+            component = document.createElement("span");
+            component.textContent = "You're offline!";
+            messageComponents.push(component);
+
+            component = document.createElement("span");
+            component.className = "message-time";
+            component.textContent = formatDate(message.datetime);
+            messageComponents.push(component);
             AUDIO.disconnected();
             break;
     }
 
-    if (type === MESSAGE_TYPE.TYPING) {
-        messageHTML = document.getElementById('typing_notification');
+    if (!messageComponents.length) {
+        return;
     }
 
-    if (!messageHTML) {
-        messageHTML = document.createElement('li');
-        messageHTML.id = type === MESSAGE_TYPE.TYPING ? 'typing_notification' : '';
+    messageItem = document.createElement('li');
+    messageItem.className = messageItemClassName;
+
+    for (let messageComponent of messageComponents) {
+        messageItem.appendChild(messageComponent);
+    }
+
+    // Verify id the list is totally scrolled
+    aux = DOM.list.clientHeight + DOM.list.scrollTop === DOM.list.scrollHeight;
+
+    DOM.list.appendChild(messageItem);
+
+    if (type === MESSAGE_TYPE.ONLINE) {
+        $(messageItem).slideDown(function () {
+            AUDIO.connected();
+        });
     } else {
-        while (messageHTML.hasChildNodes()) {
-            messageHTML.childNodes[0].remove();
-        }
+        $(messageItem).fadeIn();
     }
 
-    content.forEach(function (item) {
-        messageHTML.appendChild(item);
-    });
-
-    DOM.list.appendChild(messageHTML);
-    messageHTML.style.backgroundColor = color;
-    DOM.list.scrollTop = DOM.list.scrollHeight;
+    if (aux) {
+        $(DOM.list).animate({
+            scrollTop: DOM.list.scrollHeight - DOM.list.clientHeight
+        });
+    }
 }
 
 function formatNickname(nickname) {
-    return nickname.match(/\b(\w)/g).slice(0, 2).join("").toUpperCase();
+    return nickname.match(/\b(\w)/g).slice(0, 3).join("").toUpperCase();
 }
 
 function initAvatar() {
-    var div = document.createElement('div');
-    div.className = 'circle';
-    div.id = "user-picture";
-    div.style.backgroundColor = me.color;
-    div.appendChild(document.createTextNode(formatNickname(me.nickname)));
-    document.getElementById('avatar').appendChild(div);
-    document.getElementById('username').appendChild(document.createTextNode(me.nickname));
+    DOM.userAvatar.style.backgroundColor = me.color;
+    DOM.userAvatar.textContent = formatNickname(me.nickname);
+    DOM.userName.textContent = me.nickname;
 }
 
 function addUserToList(user) {
-    var li = document.createElement('li'),
-        div = document.createElement('div'),
-        avatar = document.createElement('div'),
-        span = document.createElement('span');
+    var userItem = document.createElement("li"),
+        userAvatar = document.createElement("div"),
+        userName = document.createElement("div");
 
-    div.className = 'user-avatar';
-    avatar.className = 'circle user-icon';
-    avatar.appendChild(document.createTextNode(formatNickname(user.nickname)));
-    span.appendChild(document.createTextNode(user.nickname));
+    userItem.className = "user";
+    userAvatar.className = "avatar user-avatar";
+    userName.className = "user-name";
 
-    div.appendChild(avatar);
-    div.appendChild(span);
-    li.appendChild(div);
+    userAvatar.textContent = formatNickname(user.nickname);
+    userAvatar.style.backgroundColor = user.color;
+    userName.textContent = user.nickname;
 
-    li.id = "user-" + user.nickname;
-    avatar.style.backgroundColor = user.color;
+    userItem.id = "user-" + user.nickname;
 
-    DOM.usersList.appendChild(li);
+    userItem.appendChild(userAvatar);
+    userItem.appendChild(userName);
+
+    DOM.usersList.appendChild(userItem);
+    $(userItem).fadeIn();
 };
 
 function setUsersList(users) {
@@ -187,23 +221,20 @@ function askNickname() {
     });
 }
 
-function updateChatSize() {
-    DOM.container.style.width = window.innerWidth + "px";
-    DOM.container.style.height = window.innerHeight + "px";
-}
-
 function formatDate (milliseconds) {
     var date = new Date(milliseconds);
 
-    return date.getFullYear() + '-' + (date.getMonth() + 1) + '-' + date.getDate() + ' ' + date.getHours() + ':' + date.getMinutes() + ':' + date.getSeconds();
+    return date.getHours() + ':' + date.getMinutes();
 };
 
 document.addEventListener("DOMContentLoaded", function () {
+    DOM.userAvatar = document.querySelector('#localuser-avatar');
+    DOM.userName = document.querySelector('#localuser-name');
     DOM.list = document.querySelector('#messages');
-    DOM.input = document.getElementById('message-input');
-    DOM.container = document.getElementById('container');
-    DOM.usersList = document.getElementById('users');
-    DOM.sendButton = document.getElementById('send-button');
+    DOM.input = document.querySelector('#message-input');
+    DOM.usersList = document.querySelector('#users');
+    DOM.sendButton = document.querySelector('#send-button');
+    DOM.typing = document.querySelector("#typing");
 
     if (!window.SharedWorker) {
         return alert("Tu navegador no soporta SharedWorkers, intenta con otro navegador\n/Your browser doesn't support SharedWorkers, try it on another browser.");
@@ -219,8 +250,8 @@ document.addEventListener("DOMContentLoaded", function () {
                 break;
             case COMMANDS.CONNECTED:
                 DOM.sendButton.disabled = DOM.input.disabled = false;
-                DOM.input.placeholder = "Escribe aquí";
-                DOM.sendButton.textContent = "Enviar";
+                DOM.input.placeholder = "Type a message";
+                DOM.sendButton.textContent = "Send";
                 appendMessage(MESSAGE_TYPE.ONLINE, data.data);
                 break;
             case COMMANDS.USER_DATA:
@@ -247,20 +278,20 @@ document.addEventListener("DOMContentLoaded", function () {
                 typing = typing.filter(function (user) {
                     return user != data.data.user;
                 });
-                document.getElementById('user-' + data.data.user).remove();
+                $('#user-' + data.data.user).fadeOut();
                 break;
             case COMMANDS.RECEIVED_MESSAGE:
                 appendMessage(MESSAGE_TYPE.MESSAGE, data.data);
                 if (data.data.user === me.nickname) {
                     DOM.sendButton.disabled = DOM.input.disabled = false;
-                    DOM.sendButton.textContent = "Enviar";
-                    DOM.input.placeholder = "Escribe aquí";
+                    DOM.sendButton.textContent = "Send";
+                    DOM.input.placeholder = "Type a message";
                     DOM.input.focus();
                 }
                 break;
             case COMMANDS.DISCONNECT:
                 DOM.sendButton.disabled = DOM.input.disabled = true;
-                DOM.sendButton.textContent = DOM.input.placeholder = "Sin conexión!";
+                DOM.sendButton.textContent = DOM.input.placeholder = "Disconected!";
                 appendMessage(MESSAGE_TYPE.OFFLINE, data.data);
                 users = {};
                 setUsersList([]);
@@ -280,7 +311,6 @@ document.addEventListener("DOMContentLoaded", function () {
     DOM.input.addEventListener('input', function () {
         if (!isTyping) {
             isTyping = true;
-            console.log("typing...");
             worker.port.postMessage({
                 cmd: COMMANDS.TYPING
             });
@@ -288,7 +318,6 @@ document.addEventListener("DOMContentLoaded", function () {
         clearTimeout(timeoutHandler);
         timeoutHandler = setTimeout(function () {
             isTyping = false;
-            console.log("...stop typing");
             worker.port.postMessage({
                 cmd: COMMANDS.STOP_TYPING
             });
@@ -303,7 +332,7 @@ document.addEventListener("DOMContentLoaded", function () {
         isTyping = false;
         if (inputValue) {
             DOM.sendButton.disabled = DOM.input.disabled = true;
-            DOM.sendButton.textContent = DOM.input.placeholder = "Enviando...";
+            DOM.sendButton.textContent = DOM.input.placeholder = "Sending...";
             worker.port.postMessage({
                 cmd: COMMANDS.SEND_MESSAGE,
                 data: {
@@ -314,12 +343,6 @@ document.addEventListener("DOMContentLoaded", function () {
         }
         DOM.input.value = '';
     });
-
-    window.addEventListener('resize', function () {
-        updateChatSize();
-    });
-
-    updateChatSize();
 
     worker.port.start();
 

@@ -1,140 +1,233 @@
-@font-face {
-    font-family: 'abeezeeregular';
-    src: url('../fonts/abeezee-regular-webfont.woff2') format('woff2'),
-         url('../fonts/abeezee-regular-webfont.woff') format('woff');
-    font-weight: normal;
-    font-style: normal;
-
+html,
+body {
+    height: 100%;
+    width: 100%;
+    margin: 0px;
+    padding: 0px;
+    font-size: 13px;
 }
-body, button, input {
-    font-family: 'abeezeeregular';
+body, input {
+    font-family: 'Raleway', sans-serif;
 }
 body {
-    margin: auto;
-
-}
-#container {
-    background: #F8F8f8;
-    height: 770px;
+    color: #444444;
+    background-color: #F7F7F7;
     display: flex;
     flex-direction: column;
     flex-wrap: nowrap;
+    justify-content: flex-start;
+    align-items: stretch;
 }
-#header {
-    background: #444444;
+header,
+footer {
     flex: 0 1 auto;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    color: beige;
-    min-height: 70px;
 }
-#header > * {
-    margin: 3px 20px;
+header {
+    background-color: #3d3b3a;
+    min-height: 50px;
+    box-sizing: border-box;
+    padding: 5px 16px;
+    text-align: right;
 }
-#avatar {
-    display: flex;
-    align-items: center;
-}
-#username {
-    margin: 0 10px;
-}
-#user-picture,
-.user-icon {
-    text-align: center;
-    vertical align: center;
-    color: white;
-}
-#user-picture {
-    width: 60px;
-    height: 60px;
-    border: 2px solid #d0d0d0;
-    border-radius: 100%;
-    display: inline-block;
-    line-height: 60px;
-}
-#body {
-    background: #888888;
+main {
     flex: 1 1 auto;
     display: flex;
     flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    align-items: stretch;
+}
+footer,
+#users {
+    border: 1px solid #DADADA;
+}
+footer {
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    max-width: 1px 0 0 0;
+    min-height: 40px;
+}
+ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
 }
 #messages,
 #users {
-    margin: 0;
-    list-style: none;
-    padding: 0px;
     overflow-x: hidden;
     overflow-y: auto;
 }
-#messages {
-    flex: 70 1 auto;
-}
-#messages li {
-    background: #ccc;
-    font-size: 14px;
-    padding: 1em;
-    margin: 1em 0;
-}
-#messages datetime {
-    font-size: .7em;
-    float: right;
-}
-#users {
-    max-width: 30%;
-    min-width: 248px;
-    background: #666666;
-    flex: 30 1 auto;
-    color: azure;
-}
-#footer {
-    background: black;
-    flex: 0 1 auto;
-}
-#message-input {
-    width: 90%;
-    font-size: 16px;
-    padding: .5em;
-    color: beige;
-    background: black;
-    border: none;
-}
-#send-button {
-    width: 8%;
-    border: none;
-    box-sizing: border-box;
-    margin: 0;
-    padding: 11px;
-    font-size: 12px;
-    background: tomato;
-    color: white
-}
-.author {
-    font-weight: bold;
-    font-size: 1.2em;
-    margin-bottom: 0.3em;
-}
-.circle {
-    border-radius: 100%;
-}
-.user-avatar {
-    padding: 5px;
-    height: auto;
+#messages-pane {
+    position: relative;
+    flex: 7 1 auto;
     display: flex;
     flex-direction: row;
-    align-items: center;
+    align-items: stretch;
 }
-.user-avatar .user-icon {
+#messages {
+    padding: 8px 0 32px 0;
+    position: relative;
+    flex-grow: 1;
+}
+#users {
+    border-width: 0 0 0 1px;
+    background-color: #EAEAEA;
+    flex: 3 1 auto;
+    min-width: 30%;
+    padding: 8px 0;
+}
+#messages li {
+    display: none;
+}
+#messages .message {
+    padding: 8px 16px 0 16px;
+    position: relative;
+    white-space: nowrap;
+}
+#messages .message.message-first {
+    padding-top: 16px;
+}
+.localuser-name {
+    color: #EAEAEA;
+    font-size: 16px;
+    font-weight: 700;
+    margin-right: 16px;
+}
+.clear {
+    clear: both;
+}
+.message {
+    text-align: left;
+}
+.message.incoming {
+    text-align: right;
+}
+.message-author {
+    margin: 8px 66px 4px 0;
+    font-weight: 700;
+    font-size: 1em;
+}
+.avatar {
+    color: #FFFFFF;
+    box-sizing: border-box;
+    text-align: center;
+    display: inline-block;
+    border-radius: 100%;
+    background: #444444;
+    position: absolute;
+}
+.localuser-avatar {
+    height: 40px;
+    width: 40px;
+    line-height: 40px;
+    font-size: 14px;
+    position: relative;
+    background-color: #888;
+}
+.message-avatar {
+    height: 40px;
+    width: 40px;
+    line-height: 40px;
+}
+.message.incoming .avatar {
+    right: 16px;
+}
+.message-text {
+    background-color: #E5E5E5;
+    display: inline-block;
+    box-sizing: border-box;
+    padding: 0 16px;
+    border-radius: 20px;
+    line-height: 20px;
+    padding: 10px 16px;
+    margin: 0 0 0 48px;
+    max-width: 70%;
+    white-space: normal;
+    color: #FFFFFF;
+}
+.message.incoming .message-text{
+    color: #444444;
+    margin: 0 48px 0 0;
+    float: right;
+}
+.message-time {
+    margin: 0 0 0 8px;
+    font-size: 0.9em;
+    color: #888;
+}
+.message.incoming .message-time {
+    margin: 0 8px 0 0;
+    line-height: 100%;
+
+}
+.notification {
+    text-align: center;
+    padding: 16px 0 0 0;
+}
+.user {
+    display: none;
+    position: relative;
+    padding: 4px 16px;
+}
+.user-avatar {
     height: 50px;
     width: 50px;
     line-height: 50px;
+    font-size: 16px;
 }
-.user-avatar span {
-    margin-left: 0.5em;
+.user-name {
+    font-size: 14px;
+    font-weight: 700;
     white-space: nowrap;
-    overflow: hidden;
     text-overflow: ellipsis;
+    overflow: hidden;
+    line-height: 50px;
+    margin: 0 0 0 60px;
 }
-.notification {
-    font-style: italic;
+#typing {
+    display: none;
+    box-sizing: border-box;
+    background: rgba(0, 0, 0, 0.5);
+    color: #EAEAEA;
+    padding: 8px 16px;
+    text-align: center;
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+}
+form {
+    flex: 1 1 auto; position: relative
+}
+#message-input {
+    height: 40px;
+    width: 100%;
+    right: 0px;
+    left: 0;
+    display: block;
+    font-size: 14px;
+    border: 0;
+    padding: 0 86px 0 16px;
+    outline: 0;
+    box-sizing: border-box;
+}
+#send-button {
+    position: absolute;
+    border: 0;
+    background: #3d3b3a;
+    color: white;
+    font-size: 15px;
+    width: 70px;
+    height: 40px;
+    top: 0;
+    right: 0;
+    outline: 0;
+}
+@media only screen and (max-width: 720px) {
+    #users {
+        display: none;
+    }
+    #typing {
+        width: 100%;
+    }
 }
