@@ -169,7 +169,10 @@ function appendMessage(type, message) {
         });
     } else if (DOM.list.clientHeight !== DOM.list.scrollHeight) {
         // verify if is scrollable
-        unread.push(messageItem.offsetTop + messageItem.clientHeight);
+        unread.push({
+            top: messageItem.offsetTop + messageItem.clientHeight,
+            el: messageItem
+        });
         handleUnreadNotification();
     }
 
@@ -381,8 +384,6 @@ document.addEventListener("DOMContentLoaded", function () {
     }, false);
 
     DOM.unread.addEventListener('click', function () {
-        unread = [];
-        handleUnreadNotification();
         $(DOM.list).animate({
             scrollTop: DOM.list.scrollHeight
         });
@@ -393,11 +394,9 @@ document.addEventListener("DOMContentLoaded", function () {
         if (scrolled === this.scrollHeight) {
             unread = [];
             handleUnreadNotification();
-        } else if (unread.length) {
-            if (this.scrollTop + this.clientHeight > unread[0]) {
-                unread.shift();
-                handleUnreadNotification();
-            }
+        } else if (unread.length && this.scrollTop + this.clientHeight > unread[0].top) {
+            unread.shift().el.className += ' unread-animation';
+            handleUnreadNotification();
         }
     });
 

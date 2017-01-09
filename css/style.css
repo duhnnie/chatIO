@@ -81,7 +81,7 @@ ul {
     display: none;
 }
 #messages .message {
-    padding: 8px 16px 0 16px;
+    padding: 4px 16px 4px 16px;
     position: relative;
     white-space: nowrap;
 }
@@ -163,7 +163,7 @@ ul {
 }
 .notification {
     text-align: center;
-    padding: 16px 0 0 0;
+    padding: 8px 0;
 }
 .user {
     display: none;
@@ -241,4 +241,17 @@ form {
     #typing {
         width: 100%;
     }
+}
+/* The animation code */
+@keyframes example {
+    from { opacity: 1;}
+    50% {opacity: 0}
+    to { opacity: 1 }
+}
+
+/* The element to apply the animation to */
+.unread-animation {
+    animation-timing-function: ease-in;
+    animation-name: example;
+    animation-duration: 2s;
 }
