@@ -119,9 +119,15 @@ function appendMessage(type, message) {
                 aux.appendChild(document.createTextNode(typing.join(', ')));
                 DOM.typing.appendChild(aux);
                 DOM.typing.appendChild(document.createTextNode((typing.length > 1 ? ' are' : ' is') + ' typing...'));
-                $(DOM.typing).fadeIn();
+                $(DOM.typing).fadeIn({queue: false});
             } else {
-                $(DOM.typing).fadeOut();
+                $(DOM.typing).fadeOut({
+                    queue: false,
+                    complete: function () {
+                        // this fix a bug when several typing notifications are received in a little amount of time
+                        this.style.opacity = '';
+                    }
+                });
             }
             break;
         case MESSAGE_TYPE.OFFLINE:
@@ -160,7 +166,7 @@ function appendMessage(type, message) {
             AUDIO.connected();
         });
     } else {
-        $(messageItem).fadeIn();
+        $(messageItem).fadeIn({queue: false});
     }
 
     if ((aux && windowActive) || (type === MESSAGE_TYPE.MESSAGE && message.user === me.nickname)) {
