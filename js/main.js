@@ -392,6 +392,9 @@ document.addEventListener("DOMContentLoaded", function () {
     DOM.list.addEventListener('scroll', function () {
         var scrolled = this.scrollTop + this.clientHeight;
         if (scrolled === this.scrollHeight) {
+            unread.map(function (item) {
+                item.el.className += ' unread-animation';
+            });
             unread = [];
             handleUnreadNotification();
         } else if (unread.length && this.scrollTop + this.clientHeight > unread[0].top) {
