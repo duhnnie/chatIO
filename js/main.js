@@ -172,6 +172,8 @@ function appendMessage(type, message) {
     if ((aux && windowActive) || (type === MESSAGE_TYPE.MESSAGE && message.user === me.nickname)) {
         $(DOM.list).animate({
             scrollTop: DOM.list.scrollHeight - DOM.list.clientHeight
+        }, {
+            queue: false
         });
     } else if (DOM.list.clientHeight !== DOM.list.scrollHeight) {
         // verify if is scrollable
@@ -253,11 +255,15 @@ function handleUnreadNotification () {
 
         $(DOM.unread).animate({
             bottom: '40px'
+        }, {
+            queue: false
         });
     } else {
         size = DOM.unread.clientHeight + 5;
         $(DOM.unread).animate({
             bottom: (size * -1) + "px"
+        }, {
+            queue: false
         });
     }
 };
