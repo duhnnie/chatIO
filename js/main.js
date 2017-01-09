@@ -77,7 +77,6 @@ function appendMessage(type, message) {
                 messageItemClassName += " incoming";
                 AUDIO.newMessage();
             }
-            lastMessage = message;
             break;
         case MESSAGE_TYPE.CONNECTED:
             messageItemClassName = "notification";
@@ -173,6 +172,8 @@ function appendMessage(type, message) {
         unread.push(messageItem.offsetTop + messageItem.clientHeight);
         handleUnreadNotification();
     }
+
+    lastMessage = message;
 }
 
 function formatNickname(nickname) {
