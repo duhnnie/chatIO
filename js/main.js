@@ -383,7 +383,8 @@ document.addEventListener("DOMContentLoaded", function () {
         windowActive = true;
     }, false);
 
-    DOM.unread.addEventListener('click', function () {
+    DOM.unread.addEventListener('click', function (e) {
+        e.preventDefault();
         $(DOM.list).animate({
             scrollTop: DOM.list.scrollHeight
         });
