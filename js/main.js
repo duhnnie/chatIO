@@ -15,14 +15,17 @@ var worker,
     lastMessage = {},
     typing = [],
     unread = [],
+    unseen = [],
     windowActive = true,
-    users = {};
+    users = {},
+    APP_NAME = "Chat IO";;
 
 function appendMessage(type, message) {
     var messageItem,
         messageItemClassName,
         component,
         aux,
+        scrollable,
         messageComponents = [];
 
     switch (type) {
@@ -169,18 +172,32 @@ function appendMessage(type, message) {
         $(messageItem).fadeIn({queue: false});
     }
 
-    if ((aux && windowActive) || (type === MESSAGE_TYPE.MESSAGE && message.user === me.nickname)) {
-        $(DOM.list).animate({
-            scrollTop: DOM.list.scrollHeight - DOM.list.clientHeight
-        }, {
-            queue: false
-        });
-    } else if (DOM.list.clientHeight !== DOM.list.scrollHeight) {
-        // verify if is scrollable
+    scrollable = DOM.list.clientHeight !== DOM.list.scrollHeight;
+
+    if (windowActive) {
+        if (scrollable) {
+            if (aux || (type === MESSAGE_TYPE.MESSAGE && message.user === me.nickname)) {
+                $(DOM.list).animate({
+                    scrollTop: DOM.list.scrollHeight - DOM.list.clientHeight
+                }, {
+                    queue: false
+                });
+            } else {
+                unread.push({
+                    top: messageItem.offsetTop + messageItem.clientHeight,
+                    el: messageItem
+                });
+                handleUnreadNotification();
+            }
+        }
+    } else if (scrollable) {
         unread.push({
             top: messageItem.offsetTop + messageItem.clientHeight,
             el: messageItem
         });
+        handleUnreadNotification();
+    } else {
+        unseen.push(messageItem);
         handleUnreadNotification();
     }
 
@@ -246,9 +263,12 @@ function formatDate (milliseconds) {
 };
 
 function handleUnreadNotification () {
-    var size;
+    var size,
+        totalUnread = unread.length + unseen.length;
 
     DOM.unreadCount.textContent = unread.length;
+    document.title = (totalUnread ? "(" + totalUnread + ") " : "") + APP_NAME;
+
     if (unread.length) {
         size = DOM.unread.clientWidth;
         DOM.unread.style.marginLeft = (size * -0.5) + "px";
@@ -393,6 +413,12 @@ document.addEventListener("DOMContentLoaded", function () {
 
     window.addEventListener('focus', function (e) {
         windowActive = true;
+
+        if (unseen.length) {
+            $(unseen).addClass('unread-animation');
+            unseen = [];
+            handleUnreadNotification();
+        }
     }, false);
 
     DOM.unread.addEventListener('click', function (e) {
